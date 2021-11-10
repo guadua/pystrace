@@ -48,37 +48,40 @@ from decimal import *
 # Initialize regular expressions
 #
 
+PATTERN_TIMESTAMP = '\d+\.\d+' # for -ttt
+PATTERN_TIMESTAMP = '\d+:\d+:\d+\.\d+' # for -tt
+
 global re_get_pid
 re_get_pid \
 		= re.compile(r"(\d+) .*")
 
 global re_extract
 re_extract \
-		= re.compile(r"\s*(\d+\.\d+) (\w+)(\(.*) <(.+)>$")
+		= re.compile(r"\s*(%s) (\w+)(\(.*) <(.+)>$" % PATTERN_TIMESTAMP)
 
 global re_extract_no_elapsed
 re_extract_no_elapsed \
-		= re.compile(r"\s*(\d+\.\d+) (\w+)(\(.*)$")
+		= re.compile(r"\s*(%s) (\w+)(\(.*)$" % PATTERN_TIMESTAMP)
 
 global re_extract_unfinished
 re_extract_unfinished \
-		= re.compile(r"\s*(\d+\.\d+ .*) <unfinished \.\.\.>$")
+		= re.compile(r"\s*(%s .*) <unfinished \.\.\.>$" % PATTERN_TIMESTAMP)
 
 global re_extract_resumed
 re_extract_resumed \
-		= re.compile(r"\s*(\d+\.\d+) <\.\.\. [\a-zA-Z\d]+ resumed>(.*)$")
+		= re.compile(r"\s*(%s) <\.\.\. [\a-zA-Z\d]+ resumed>(.*)$" % PATTERN_TIMESTAMP)
 
 global re_extract_signal
 re_extract_signal \
-		= re.compile(r"\s*(\d+\.\d+) --- (\w+) \{(.)*\} ---$")
+		= re.compile(r"\s*(%s) --- (\w+) \{(.)*\} ---$" % PATTERN_TIMESTAMP)
 
 global re_extract_exit
 re_extract_exit \
-		= re.compile(r"\s*(\d+\.\d+) \+\+\+ exited with (-?[\d]+) \+\+\+$")
+		= re.compile(r"\s*(%s) \+\+\+ exited with (-?[\d]+) \+\+\+$" % PATTERN_TIMESTAMP)
 
 global re_extract_kill
 re_extract_kill \
-		= re.compile(r"\s*(\d+\.\d+) \+\+\+ killed by ([\w]+) \+\+\+$")
+		= re.compile(r"\s*(%s) \+\+\+ killed by ([\w]+) \+\+\+$" % PATTERN_TIMESTAMP)
 
 global re_extract_arguments_and_return_value_none
 re_extract_arguments_and_return_value_none \
@@ -309,7 +312,8 @@ class StraceInputStream:
 		if line.endswith("---"):
 			r = re_extract_signal.match(line, pos_start)
 			if r is not None:
-				timestamp = Decimal(r.group(1))
+				# timestamp = Decimal(r.group(1))
+				timestamp = r.group(1)
 				signal_name = r.group(2)
 				arguments = self.__parse_arguments(r.group(3))
 				return StraceEntry(pid, timestamp, False, 0, signal_name, arguments, 0)
@@ -319,13 +323,15 @@ class StraceInputStream:
 		if line.endswith("+++"):
 			r = re_extract_exit.match(line, pos_start)
 			if r is not None:
-				timestamp = Decimal(r.group(1))
+				# timestamp = Decimal(r.group(1))
+				timestamp = r.group(1)
 				return_value = r.group(2)
 				return StraceEntry(pid, timestamp, False, 0, "EXIT", [], return_value)
 
 			r = re_extract_kill.match(line, pos_start)
 			if r is not None:
-				timestamp = Decimal(r.group(1))
+				# timestamp = Decimal(r.group(1))
+				timestamp = r.group(1)
 				return StraceEntry(pid, timestamp, False, 0, "KILL", [r.group(2)], 0)
 		
 		
@@ -356,7 +362,8 @@ class StraceInputStream:
 		
 		r = re_extract.match(line, pos_start)
 		if r is not None:
-			timestamp = Decimal(r.group(1))
+		        # timestamp = Decimal(r.group(1))
+			timestamp = r.group(1)
 			syscall_name = r.group(2)
 			args_and_result_str = r.group(3)
 			elapsed_time = r.group(4)
@@ -369,7 +376,8 @@ class StraceInputStream:
 		else:
 			r = re_extract_no_elapsed.match(line, pos_start)
 			if r is not None:
-				timestamp = Decimal(r.group(1))
+				# timestamp = Decimal(r.group(1))
+				timestamp = r.group(1)
 				syscall_name = r.group(2)
 				args_and_result_str = r.group(3)
 				elapsed_time = None
